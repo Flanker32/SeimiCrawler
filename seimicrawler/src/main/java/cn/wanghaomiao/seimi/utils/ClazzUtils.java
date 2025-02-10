@@ -18,7 +18,7 @@ public class ClazzUtils {
         SeimiDownloader downloader = instanceCache.get(clazz);
         if (downloader == null){
             try {
-                downloader = clazz.newInstance();
+                downloader = clazz.getDeclaredConstructor().newInstance();
                 instanceCache.put(clazz, downloader);
             } catch (Exception e) {
                 throw new SeimiProcessExcepiton(e);

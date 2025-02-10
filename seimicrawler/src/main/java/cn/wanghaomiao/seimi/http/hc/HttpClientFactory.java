@@ -15,19 +15,19 @@
  */
 package cn.wanghaomiao.seimi.http.hc;
 
-import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.HttpRequest;
-import org.apache.http.client.CookieStore;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.HttpRequestRetryHandler;
-import org.apache.http.client.RedirectStrategy;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.client.LaxRedirectStrategy;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.protocol.HttpContext;
+import org.apache.hc.core5.http.HttpEntityEnclosingRequest;
+import org.apache.hc.core5.http.HttpRequest;
+import org.apache.hc.client5.http.HttpRequestRetryHandler;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.cookie.CookieStore;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.client5.http.protocol.RedirectStrategy;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.classic.LaxRedirectStrategy;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.core5.http.protocol.HttpContext;
 
 import javax.net.ssl.SSLException;
 import java.io.IOException;
@@ -35,6 +35,7 @@ import java.io.InterruptedIOException;
 import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author github.com/zhegexiaohuozi seimimaster@gmail.com
@@ -98,7 +99,7 @@ public class HttpClientFactory {
             }
         };
         RedirectStrategy redirectStrategy = new LaxRedirectStrategy();
-        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(timeout).setConnectionRequestTimeout(timeout).setSocketTimeout(timeout).build();
+        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(timeout, TimeUnit.MILLISECONDS).setConnectionRequestTimeout(timeout, TimeUnit.MILLISECONDS).setResponseTimeout(timeout, TimeUnit.MILLISECONDS).build();
         PoolingHttpClientConnectionManager poolingHttpClientConnectionManager = HttpClientConnectionManagerProvider.getHcPoolInstance();
         return HttpClients.custom().setDefaultRequestConfig(requestConfig).setConnectionManager(poolingHttpClientConnectionManager)
                 .setRedirectStrategy(redirectStrategy).setRetryHandler(retryHander);

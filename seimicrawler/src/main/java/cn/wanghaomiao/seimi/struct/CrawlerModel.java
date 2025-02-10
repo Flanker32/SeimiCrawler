@@ -27,9 +27,9 @@ import cn.wanghaomiao.seimi.utils.StrFormatUtil;
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpHost;
-import org.apache.http.client.CookieStore;
-import org.apache.http.impl.client.BasicCookieStore;
+import org.apache.hc.client5.http.cookie.BasicCookieStore;
+import org.apache.hc.client5.http.cookie.CookieStore;
+import org.apache.hc.core5.http.HttpHost;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -108,7 +108,7 @@ public class CrawlerModel {
             if (scheme.equals("socket")) {
                 r = new HttpHost(host, port);
             } else {
-                r = new HttpHost(host, port, scheme);
+                r = new HttpHost(scheme, host, port);
             }
         } else {
             logger.error("proxy must like ‘http|https|socket://host:port’");

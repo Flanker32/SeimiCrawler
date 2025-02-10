@@ -25,12 +25,12 @@ import cn.wanghaomiao.seimi.struct.CrawlerModel;
 import cn.wanghaomiao.seimi.struct.Request;
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.message.BasicNameValuePair;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.springframework.util.CollectionUtils;
 
 import java.nio.charset.Charset;
@@ -43,8 +43,8 @@ import java.util.Map;
  * @since 2016/4/14.
  */
 public class HcRequestGenerator {
-    public static RequestBuilder getHttpRequestBuilder(Request request, CrawlerModel crawlerModel) {
-        RequestBuilder requestBuilder;
+    public static ClassicRequestBuilder getHttpRequestBuilder(Request request, CrawlerModel crawlerModel) {
+        ClassicRequestBuilder requestBuilder;
         BaseSeimiCrawler crawler = crawlerModel.getInstance();
         if (request.isUseSeimiAgent()) {
             SeimiConfig config = CrawlerCache.getConfig();
@@ -52,7 +52,7 @@ public class HcRequestGenerator {
                 throw new SeimiProcessExcepiton("SeimiAgentHost is blank.");
             }
             String seimiAgentUrl = "http://" + config.getSeimiAgentHost() + (config.getSeimiAgentPort() != 80 ? (":" + config.getSeimiAgentPort()) : "") + "/doload";
-            requestBuilder = RequestBuilder.post().setUri(seimiAgentUrl);
+            requestBuilder = ClassicRequestBuilder.post().setUri(seimiAgentUrl);
             List<NameValuePair> nameValuePairList = new LinkedList<>();
             nameValuePairList.add(new BasicNameValuePair("url", request.getUrl()));
             if (StringUtils.isNotBlank(crawler.proxy())) {
@@ -77,7 +77,7 @@ public class HcRequestGenerator {
             requestBuilder.setEntity(new UrlEncodedFormEntity(nameValuePairList, Charset.forName("utf8")));
         } else {
             if (HttpMethod.POST.equals(request.getHttpMethod())) {
-                requestBuilder = RequestBuilder.post().setUri(request.getUrl());
+                requestBuilder = ClassicRequestBuilder.post().setUri(request.getUrl());
                 if (StringUtils.isNotBlank(request.getJsonBody())){
                     requestBuilder.addHeader("Content-type","application/json; charset=utf-8");
                     requestBuilder.setEntity(new StringEntity(request.getJsonBody(), Charset.forName("UTF-8")));
@@ -89,7 +89,7 @@ public class HcRequestGenerator {
                     requestBuilder.setEntity(new UrlEncodedFormEntity(nameValuePairList, Charset.forName("utf8")));
                 }
             } else {
-                requestBuilder = RequestBuilder.get().setUri(request.getUrl());
+                requestBuilder = ClassicRequestBuilder.get().setUri(request.getUrl());
                 if (request.getParams() != null) {
                     for (Map.Entry<String, String> entry : request.getParams().entrySet()) {
                         requestBuilder.addParameter(entry.getKey(), entry.getValue());

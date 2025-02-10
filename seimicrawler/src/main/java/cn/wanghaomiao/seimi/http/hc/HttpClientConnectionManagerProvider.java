@@ -16,7 +16,7 @@
 package cn.wanghaomiao.seimi.http.hc;
 
 
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 
 /**
  * @author github.com/zhegexiaohuozi seimimaster@gmail.com

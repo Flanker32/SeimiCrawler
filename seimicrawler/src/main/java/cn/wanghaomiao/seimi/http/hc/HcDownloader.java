@@ -28,20 +28,20 @@ import org.seimicrawler.xpath.exception.NoSuchFunctionException;
 import org.seimicrawler.xpath.exception.XpathSyntaxErrorException;
 import org.seimicrawler.xpath.JXDocument;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.CookieStore;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.entity.ContentType;
-import org.apache.http.impl.cookie.BasicClientCookie;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.protocol.HttpCoreContext;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.client5.http.cookie.CookieStore;
+import org.apache.hc.client5.http.impl.cookie.BasicClientCookie;
+import org.apache.hc.core5.http.protocol.BasicHttpContext;
+import org.apache.hc.core5.http.protocol.HttpContext;
+import org.apache.hc.core5.http.protocol.HttpCoreContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +64,7 @@ public class HcDownloader implements SeimiDownloader {
 
     private CrawlerModel crawlerModel;
     private HttpClient hc;
-    private RequestBuilder currentReqBuilder;
+    private ClassicRequestBuilder currentReqBuilder;
     private Request currentRequest;
     private HttpResponse httpResponse;
     private HttpContext httpContext = new BasicHttpContext();
@@ -93,7 +93,7 @@ public class HcDownloader implements SeimiDownloader {
 
     @Override
     public int statusCode() {
-        return httpResponse.getStatusLine().getStatusCode();
+        return httpResponse.getCode();
     }
 
     @Override
@@ -171,13 +171,13 @@ public class HcDownloader implements SeimiDownloader {
     }
 
     private String getRealUrl(HttpContext httpContext){
-        Object target = httpContext.getAttribute(HttpCoreContext.HTTP_TARGET_HOST);
+        Object target = httpContext.getAttribute("http.target_host");
         Object reqUri = httpContext.getAttribute(HttpCoreContext.HTTP_REQUEST);
         if (target==null||reqUri==null){
             return null;
         }
         HttpHost t = (HttpHost) target;
         HttpUriRequest r = (HttpUriRequest)reqUri;
-        return r.getURI().isAbsolute()?r.getURI().toString():t.toString()+r.getURI().toString();
+        return r.getUri().isAbsolute()?r.getUri().toString():t.toString()+r.getUri().toString();
     }
 }

@@ -194,7 +194,7 @@ public class Response extends CommonObject {
     }
 
     private <T> T parse(Class<T> target, String text) throws Exception {
-        T bean = target.newInstance();
+        T bean = target.getDeclaredConstructor().newInstance();
         final List<Field> props = new LinkedList<>();
         ReflectionUtils.doWithFields(target, props::add);
         JXDocument jxDocument = JXDocument.create(text);
@@ -243,8 +243,8 @@ public class Response extends CommonObject {
         if (String.class.isAssignableFrom(componentClass)){
             List<String> resTmp = new LinkedList<>();
             for (Object obj:xpathRes){
-                if (obj instanceof Element){
-                    resTmp.add(((Element)obj).html());
+                if (obj instanceof Element element){
+                    resTmp.add(element.html());
                 }else {
                     resTmp.add(obj.toString());
                 }
