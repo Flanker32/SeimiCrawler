@@ -27,6 +27,7 @@ import com.alibaba.fastjson.JSON;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
@@ -96,10 +97,10 @@ public class HcRequestGenerator {
                     }
                 }
             }
+            HttpClientContext context = HttpClientContext.create();
             RequestConfig config = RequestConfig.custom().setProxy(crawlerModel.getProxy()).setCircularRedirectsAllowed(true).build();
-
-
-            requestBuilder.setConfig(config).setHeader("User-Agent", crawlerModel.isUseCookie() ? crawlerModel.getCurrentUA() : crawler.getUserAgent());
+            context.setRequestConfig(config);
+            requestBuilder.setHeader("User-Agent", crawlerModel.isUseCookie() ? crawlerModel.getCurrentUA() : crawler.getUserAgent());
             requestBuilder.setHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
             requestBuilder.setHeader("Accept-Language", "zh-CN,zh;q=0.8,en;q=0.6");
         }

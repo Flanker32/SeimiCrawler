@@ -21,7 +21,7 @@ import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
 import org.apache.hc.client5.http.socket.PlainConnectionSocketFactory;
 import org.apache.hc.core5.ssl.SSLContextBuilder;
 import org.apache.hc.core5.ssl.TrustStrategy;
-import org.apache.hc.core5.ssl.X509HostnameVerifier;
+import javax.net.ssl.HostnameVerifier;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,25 +53,10 @@ public class HttpClientCMPBox {
             });
             SSLContext sslContext = builder.build();
             SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
-                    sslContext, new X509HostnameVerifier() {
+                    sslContext, new HostnameVerifier() {
                 @Override
-                public void verify(String host, SSLSocket ssl)
-                        throws IOException {
-                }
-
-                @Override
-                public void verify(String host, X509Certificate cert)
-                        throws SSLException {
-                }
-
-                @Override
-                public void verify(String host, String[] cns,
-                                   String[] subjectAlts) throws SSLException {
-                }
-
-                @Override
-                public boolean verify(String s, SSLSession sslSession) {
-                    return true;
+                public boolean verify(String hostname, SSLSession session) {
+                    return true; // Note: this is a lenient implementation for SSL verification
                 }
             });
             Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()

@@ -2,7 +2,8 @@ package cn.wanghaomiao.seimi.utils;
 
 import java.util.regex.Pattern;
 
-import sun.misc.LRUCache;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 public class Scanner {
 
@@ -15,15 +16,9 @@ public class Scanner {
     private Object typeCache = null;
     private Readable source;
 
-    private LRUCache<String, Pattern> patternCache = new LRUCache<String, Pattern>(10) {
-        protected Pattern create(String s) {
-            return Pattern.compile(s);
-        }
-
-        protected boolean hasName(Pattern p, String s) {
-            return p.pattern().equals(s);
-        }
-    };
+    private Cache<String, Pattern> patternCache = Caffeine.newBuilder()
+        .maximumSize(10)
+        .build();
 
     public Scanner(Readable source, Pattern pattern) {
         this.source = source;
@@ -31,7 +26,7 @@ public class Scanner {
     }
 
     public Scanner useDelimiter(String pattern) {
-        delimPattern = patternCache.forName(pattern);
+        delimPattern = patternCache.get(pattern, Pattern::compile);
         return this;
     }
 
@@ -46,7 +41,7 @@ public class Scanner {
     }
 
     public boolean hasNext(String pattern) {
-        return hasNext(patternCache.forName(pattern));
+        return hasNext(patternCache.get(pattern, Pattern::compile));
     }
 
     private String getCachedResult() {
@@ -69,6 +64,6 @@ public class Scanner {
     }
 
     public String next(String pattern) {
-        return next(patternCache.forName(pattern));
+        return next(patternCache.get(pattern, Pattern::compile));
     }
 }

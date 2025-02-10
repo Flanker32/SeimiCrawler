@@ -35,6 +35,7 @@ import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
 import org.apache.hc.client5.http.cookie.CookieStore;
@@ -45,6 +46,7 @@ import org.apache.hc.core5.http.protocol.HttpCoreContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.List;
 
@@ -112,7 +114,7 @@ public class HcDownloader implements SeimiDownloader {
 
     private Response renderResponse(HttpResponse httpResponse, Request request, HttpContext httpContext){
         Response seimiResponse = new Response();
-        HttpEntity entity = httpResponse.getEntity();
+        HttpEntity entity = ((CloseableHttpResponse)httpResponse).getEntity();
         seimiResponse.setSeimiHttpType(SeimiHttpType.APACHE_HC);
         seimiResponse.setRealUrl(getRealUrl(httpContext));
         seimiResponse.setUrl(request.getUrl());
@@ -124,12 +126,12 @@ public class HcDownloader implements SeimiDownloader {
             if (referer!=null){
                 seimiResponse.setReferer(referer.getValue());
             }
-            String contentTypeStr = entity.getContentType().getValue().toLowerCase();
+            String contentTypeStr = entity.getContentType().toLowerCase();
             if (contentTypeStr.contains("text")||contentTypeStr.contains("json")||contentTypeStr.contains("ajax")){
                 seimiResponse.setBodyType(BodyType.TEXT);
                 try {
                     seimiResponse.setData(EntityUtils.toByteArray(entity));
-                    ContentType contentType = ContentType.get(entity);
+                    ContentType contentType = ContentType.parse(entity.getContentType());
                     Charset charset = contentType.getCharset();
                     if (charset==null){
                         seimiResponse.setContent(new String(seimiResponse.getData(),"ISO-8859-1"));
@@ -170,14 +172,19 @@ public class HcDownloader implements SeimiDownloader {
         return StringUtils.isNotBlank(charset)?charset:"UTF-8";
     }
 
-    private String getRealUrl(HttpContext httpContext){
-        Object target = httpContext.getAttribute("http.target_host");
-        Object reqUri = httpContext.getAttribute(HttpCoreContext.HTTP_REQUEST);
-        if (target==null||reqUri==null){
+    private String getRealUrl(HttpContext httpContext) {
+        try {
+            Object target = httpContext.getAttribute("http.target_host");
+            Object reqUri = httpContext.getAttribute(HttpCoreContext.HTTP_REQUEST);
+            if (target==null||reqUri==null){
+                return null;
+            }
+            HttpHost t = (HttpHost) target;
+            HttpUriRequest r = (HttpUriRequest)reqUri;
+            return r.getUri().isAbsolute() ? r.getUri().toString() : t.toString() + r.getUri().toString();
+        } catch (URISyntaxException e) {
+            logger.error("Error getting real URL", e);
             return null;
         }
-        HttpHost t = (HttpHost) target;
-        HttpUriRequest r = (HttpUriRequest)reqUri;
-        return r.getUri().isAbsolute()?r.getUri().toString():t.toString()+r.getUri().toString();
     }
 }

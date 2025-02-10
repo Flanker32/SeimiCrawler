@@ -15,9 +15,11 @@
  */
 package cn.wanghaomiao.seimi.http.hc;
 
-import org.apache.hc.core5.http.HttpEntityEnclosingRequest;
+
 import org.apache.hc.core5.http.HttpRequest;
-import org.apache.hc.client5.http.HttpRequestRetryHandler;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.util.TimeValue;
+import org.apache.hc.client5.http.HttpRequestRetryStrategy;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.cookie.CookieStore;
@@ -25,7 +27,7 @@ import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.client5.http.protocol.RedirectStrategy;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.client5.http.impl.classic.LaxRedirectStrategy;
+import org.apache.hc.client5.http.impl.DefaultRedirectStrategy;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.core5.http.protocol.HttpContext;
 
@@ -64,44 +66,50 @@ public class HttpClientFactory {
     }
 
     public static HttpClientBuilder cliBuilder(int timeout) {
-        HttpRequestRetryHandler retryHander = new HttpRequestRetryHandler() {
+        HttpRequestRetryStrategy retryHandler = new HttpRequestRetryStrategy() {
             @Override
-            public boolean retryRequest(IOException exception, int executionCount, HttpContext context) {
+            public boolean retryRequest(
+                    HttpRequest request,
+                    IOException exception,
+                    int executionCount,
+                    HttpContext context) {
                 if (executionCount > 3) {
-                    // Do not retry if over max retry count
                     return false;
                 }
-                if (exception instanceof java.net.SocketTimeoutException) {
-                    //特殊处理
-                    return true;
-                }
-                if (exception instanceof InterruptedIOException) {
-                    // Timeout
-                    return true;
-                }
-                if (exception instanceof UnknownHostException) {
-                    // Unknown host
-                    return false;
-                }
-
                 if (exception instanceof SSLException) {
-                    // SSL handshake exception
                     return false;
                 }
-                HttpClientContext clientContext = HttpClientContext.adapt(context);
-                HttpRequest request = clientContext.getRequest();
-                boolean idempotent = !(request instanceof HttpEntityEnclosingRequest);
+                boolean idempotent = request.getMethod().equals("GET");
                 if (idempotent) {
-                    // Retry if the request is considered idempotent
                     return true;
                 }
                 return false;
             }
+
+            @Override
+            public boolean retryRequest(
+                    HttpResponse response,
+                    int executionCount,
+                    HttpContext context) {
+                if (executionCount > 3) {
+                    return false;
+                }
+                int statusCode = response.getCode();
+                return statusCode == 429 || (statusCode >= 500 && statusCode <= 599);
+            }
+
+            @Override
+            public TimeValue getRetryInterval(
+                    HttpResponse response,
+                    int executionCount,
+                    HttpContext context) {
+                return TimeValue.ofSeconds(1);
+            }
         };
-        RedirectStrategy redirectStrategy = new LaxRedirectStrategy();
+        RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
         RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(timeout, TimeUnit.MILLISECONDS).setConnectionRequestTimeout(timeout, TimeUnit.MILLISECONDS).setResponseTimeout(timeout, TimeUnit.MILLISECONDS).build();
         PoolingHttpClientConnectionManager poolingHttpClientConnectionManager = HttpClientConnectionManagerProvider.getHcPoolInstance();
         return HttpClients.custom().setDefaultRequestConfig(requestConfig).setConnectionManager(poolingHttpClientConnectionManager)
-                .setRedirectStrategy(redirectStrategy).setRetryHandler(retryHander);
+                .setRedirectStrategy(redirectStrategy).setRetryStrategy(retryHandler);
     }
 }

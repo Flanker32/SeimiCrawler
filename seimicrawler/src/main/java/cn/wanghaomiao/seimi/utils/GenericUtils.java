@@ -18,8 +18,8 @@ package cn.wanghaomiao.seimi.utils;
 import cn.wanghaomiao.seimi.core.CastToNumber;
 import cn.wanghaomiao.seimi.struct.Request;
 import com.alibaba.fastjson.JSONObject;
-import net.sf.cglib.proxy.Enhancer;
-import net.sf.cglib.proxy.MethodInterceptor;
+import org.springframework.cglib.proxy.Enhancer;
+import org.springframework.cglib.proxy.MethodInterceptor;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.lang.reflect.Array;
@@ -74,8 +74,8 @@ public class GenericUtils {
                 Type actualType = actualTypes[i];
                 if (actualType instanceof Class<?> class1) {
                     actualClasses[i] = class1;
-                } else if (actualType instanceof GenericArrayType type) {
-                    Type componentType = type.getGenericComponentType();
+                } else if (actualType instanceof GenericArrayType arrayType) {
+                    Type componentType = arrayType.getGenericComponentType();
                     actualClasses[i] = Array.newInstance((Class<?>) componentType, 0).getClass();
                 }
                 i++;
